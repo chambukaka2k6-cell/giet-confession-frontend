@@ -107,6 +107,7 @@
   </div>
 
   <script>
+    const API_BASE = 'https://giet-confession-backend.onrender.com';
     const abusive = ['fuck','shit','bitch','asshole','cunt','dick','piss','slut'];
     const input = document.getElementById('confessionInput');
     const wordInfo = document.getElementById('wordInfo');
@@ -167,7 +168,7 @@ function showNotification(message) {
     }
 
     function fetchConfessions() {
-      fetch('/api/confessions').then(r => r.json()).then(data => {
+      fetch(`${API_BASE}/api/confessions`).then(r => r.json()).then(data => {
         const grid = document.getElementById('confessionsGrid');
         grid.innerHTML = '';
 
@@ -192,7 +193,7 @@ function showNotification(message) {
     }
 
     window.vote = function(id, type) {
-      fetch(`/api/${type}/${id}`, {
+      fetch(`${API_BASE}/api/${type}/${id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clientId: getClientId() })
@@ -223,7 +224,7 @@ function showNotification(message) {
       message = filterNumbersAndAbuse(message);
       if (!message.trim()) return status.textContent = 'Your message is empty after filtering.';
 
-      fetch('/api/confessions', {
+      fetch(`${API_BASE}/api/confessions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message, clientId: getClientId() })
@@ -252,40 +253,27 @@ function showNotification(message) {
       }
     }
 
-    async function registerVisit() {
-      if (localStorage.getItem('giet_visit_registered')) {
-        return;
-      }
+    async function updateVisitorInfo() {
       const clientId = getClientId();
       try {
-        await fetch('/api/visit', {
+        const res = await fetch(`${API_BASE}/api/visit`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ clientId })
         });
-        localStorage.setItem('giet_visit_registered', 'true');
-      } catch (err) {
-        console.warn('visit registration failed', err);
-      }
-    }
-
-    async function updateVisitorInfo() {
-      try {
-        const res = await fetch('/api/analytics');
         const data = await res.json();
         const label = document.getElementById('analyticsInfo');
         if (label && data) {
           label.textContent = `Visits: ${data.visits} | Unique: ${data.uniqueVisitors} | Live: ${data.activeVisitors}`;
         }
       } catch (err) {
-        console.warn('analytics update failed', err);
+        console.warn('visit update failed', err);
       }
     }
 
     window.addEventListener('load', () => {
       window.setInterval(fetchConfessions, 12000);
       window.setInterval(updateVisitorInfo, 15000);
-      registerVisit();
       fetchConfessions();
       updateVisitorInfo();
       updateVisit();
